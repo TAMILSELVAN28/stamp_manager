@@ -1,0 +1,37 @@
+
+{% load static %}
+
+{% block content %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="myfile">
+    <button type="submit">Upload</button>
+  </form>
+
+  {% if not sale_upload_status %}
+        <h1>Sale uploaded successfully</h1>
+      {% elif sale_upload_status == 1 %}
+      <h3>Please resolve the non matching stamp id and upload again</h3>
+      <table>
+        <tr>
+          <th style="border: 2px solid black;">non_matching_stampid</th>
+          <th style="border: 2px solid black;">Denomination</th>
+        </tr>
+        <tr>
+      {% for id in conflict_df %}
+          <td style="border: 2px solid black; padding: 5px;">{{id.stamp_id}}</td>
+          <td style="border: 2px solid black; padding: 5px;">{{id.denomination}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% elif sale_upload_status == 2 %}
+      <h3>Zero matching sale stamp_id please check the sale stamp_id</h3>
+      {% else %}
+      <h3>Please select the sale upload file and then click upload button</h3>
+      {% endif %}
+
+  <p><a href="{% url 'home' %}">Return to home</a></p>
+{% endblock %}
+
+
+

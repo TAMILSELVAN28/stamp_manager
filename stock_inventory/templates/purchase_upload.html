@@ -1,0 +1,34 @@
+
+{% load static %}
+
+{% block content %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="myfile">
+    <button type="submit">Upload</button>
+  </form>
+      {% if not purchase_upload_status %}
+        <h1>Purchase uploaded successfully</h1>
+      {% elif purchase_upload_status == 1 %}
+      <h3>Please resolve the conflict stamp id and upload again</h3>
+      <table>
+        <tr>
+          <th style="border: 2px solid black;">Duplicate_stamp_id</th>
+          <th style="border: 2px solid black;">Denomination</th>
+        </tr>
+        <tr>
+      {% for id in conflict_df %}
+          <td style="border: 2px solid black; padding: 5px;">{{id.stamp_id}}</td>
+          <td style="border: 2px solid black; padding: 5px;">{{id.denomination}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      <h3>Please select the upload file and then click upload button</h3>
+      {% endif %}
+
+  <p><a href="{% url 'home' %}">Return to home</a></p>
+{% endblock %}
+
+
+
