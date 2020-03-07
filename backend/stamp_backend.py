@@ -72,6 +72,7 @@ def stamp_sold(stamp_records, obj):
         )
         stmp_obj.is_sale = 1
         stmp_obj.sold_date = row['sold_date']
+        stmp_obj.purchaser_details = row['name']
         stmp_obj.save()
 
 

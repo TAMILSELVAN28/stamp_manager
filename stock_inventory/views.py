@@ -18,11 +18,11 @@ def home(request):
         form = Dropdown(request.POST)
         if form.is_valid():
             table_name = form['category'].value()
+            if table_name == 'select':
+                return render(request, 'home.html', {'form': form, 'form_invalid': True})
             obj = get_obj(table_name)
             denomination = 0
             extra_col = False
-            if table_name == 'select':
-                return render(request, 'home.html', {'form': form})
             for key in stamp_types:
                 if key == table_name:
                     denomination = stamp_types[key]
@@ -31,10 +31,10 @@ def home(request):
                         extra_col = True
                     else:
                         data = obj.objects.filter(is_sale=0, delete_flag=0)
-            return render(request, 'home.html', {'datas': data, 'denomination':denomination, 'extra':extra_col})
+            return render(request, 'home.html', {'datas': data, 'denomination':denomination, 'extra':extra_col, 'data':True})
     else:
         form = Dropdown()
-    return render(request, 'home.html', {'form': form})
+    return render(request, 'home.html', {'form': form, 'data':False})
 
 
 def purchase_upload(request):
@@ -47,21 +47,27 @@ def purchase_upload(request):
                 filename = fs.save(myfile.name, myfile)
                 purchase_file_path = purchase_document_path + "/" + filename
                 full_data = pd.DataFrame()
+                stamp_df = pd.DataFrame()
                 for stamp_type, stamp in stamp_types.items():
-                    stamp_df = process_purchases(purchase_file_path, stamp)
-                    if not stamp_df.empty:
-                        data = stamp_verifier(stamp_df, stamp_type)
+                    inv_stamp_df = process_purchases(purchase_file_path, stamp)
+                    if not inv_stamp_df.empty:
+                        data = stamp_verifier(inv_stamp_df, stamp_type)
                         if not data.empty:
                             data['denomination'] = stamp
                             full_data = full_data.append(data)
+                        stamp_df = stamp_df.append(inv_stamp_df)
+
 
                 if full_data.empty:
                     for stamp_type, stamp in stamp_types.items():
-                        puchase_insert(stamp_df, stamp_types)
+                        insert_df = stamp_df.loc[stamp_df['denomination'] == stamp].copy()
+                        if not insert_df.empty:
+                            puchase_insert(insert_df, stamp_type)
                     return render(request, 'purchase_upload.html', {
                         'purchase_upload_status': 0
                     })
                 else:
+                    full_data = full_data.reset_index(drop=True)
                     full_data = full_data.T.to_dict().values()
                     return render(request, 'purchase_upload.html', {
                         'purchase_upload_status' : 1, 
@@ -95,9 +101,11 @@ def sale_upload(request):
                 merged = pd.DataFrame()
                 if not full_data.empty:
                     merged = pd.merge(input_sale, full_data, on=['stamp_id'])
-                    if merged.shape == input_sale.shape:
+                    if merged.shape[0] == input_sale.shape[0]:
                         for stamp_type, stamp in stamp_types.items():
-                            stamp_sold(stamp_df, stamp_types)
+                            update_df = input_sale.loc[input_sale['denomination'] == stamp] .copy()
+                            if not update_df.empty:
+                                stamp_sold(update_df, stamp_type)
                         return render(request, 'sale_upload.html', {
                             'sale_upload_status': 0
                         })
@@ -134,14 +142,26 @@ def download(request):
         for table_name in stamp_table_and_denomination:
             db = MySQLdb.connect(user='zoomrx', db='stamp_paper', passwd='', host='localhost')
             cursor = db.cursor()
-            cursor.execute(f'SELECT * FROM {table_name} WHERE is_sale = {is_sale} and delete_flag = 0')
-            data = pd.DataFrame(cursor.fetchall())
+            if is_sale:
+                cursor.execute(f"SELECT stamp_id, purchase_date, sold_date, purchaser_details \
+                    FROM {table_name} WHERE is_sale = {is_sale} and delete_flag = 0")
+                data = pd.DataFrame(cursor.fetchall(), columns=['stamp_id', 'purchase_date', 'sold_date', 'purhcaser_details'])
+
+            else:
+                cursor.execute(f'SELECT stamp_id, purchase_date FROM {table_name} WHERE is_sale = {is_sale} and delete_flag = 0')
+                data = pd.DataFrame(cursor.fetchall(), columns=['stamp_id', 'purchase_date'])
+            data['denomination'] = stamp_table_and_denomination[table_name]
             final = final.append(data)
         db.close()
+        print(final)
         response = HttpResponse('')
         response['Content-Disposition'] = 'attachment; filename={}'.format(download_filename)
 
         writer = csv.writer(response, dialect=csv.excel)
+        if is_sale:
+            writer.writerow(['stamp_id', 'purchase_date', 'sold_date', 'purchaser_details', 'denomination'])
+        else:
+            writer.writerow(['stamp_id', 'purchase_date', 'denomination'])
         for _, row in final.iterrows():
             writer.writerow(row)
         return response

@@ -2,6 +2,20 @@
 {% load static %}
 
 {% block content %}
+<h1>sample purchase file</h1>
+<table>
+  <tr>
+    <th>stamp_id</th>
+    <th>denomination</th>
+    <th>purchase_date</th>
+  </tr>
+  <tr>
+    <td>ABC0001</td>
+    <td>10</td>
+    <td>01-03-2020</td>
+  </tr>
+</table>
+<br>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <input type="file" name="myfile">

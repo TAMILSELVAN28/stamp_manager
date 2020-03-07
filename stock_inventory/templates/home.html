@@ -8,7 +8,17 @@
   <h1>N S VISWANATHAN STAMP VENDOR</h1>
   <a href="{% url 'purchase_upload' %}">Purchase Upload</a><br><br>
   <a href="{% url 'sale_upload' %}">Sales Upload</a><br><br>
+  <br>
+<div>
+  <form method='POST', action="download/">
+    {% csrf_token %}
+    <input type='submit' name = "sale" value='Download_Sale'></input>
+    <input type="submit"  name="stock" value="Download_Stock"></input>
 
+</form>
+</div>  
+<br>
+<br>
 
 <form method="post" novalidate>
   {% csrf_token %}
@@ -23,6 +33,10 @@
 
 {% load static %}
 <link rel='stylesheet' href="{% static 'style.css' %}">
+{% if form_invalid %}
+<h3>Please Select the stamp paper category and click sale or stock</h3>
+{% else %}
+{% if data %}
 <div id="stock_table">
 <ol>
 <table style="text-align: center">
@@ -32,6 +46,7 @@
     <th>denomination</th>
     {% if extra %}
     <th>sold_date</th>
+    <th>purchaser_details</th>
     {% endif %}
   </tr>
   {% for b in datas %}
@@ -41,20 +56,15 @@
     <td> {{ denomination }}</td>
     {% if extra %}
     <td> {{ b.sold_date }} </td>
+    <td> {{ b.purchaser_details }}</td>
     {% endif %}
   </tr>
   {% endfor %}
   </table>
 </ol>
 </div>
-<div> 
-  <form method='POST', action="download/">
-    {% csrf_token %}
-    <input type='submit' name = "sale" value='Download_Sale'></input>
-    <input type="submit"  name="stock" value="Download_Stock"></input>
-
-</form>
-</div>
-
+{% endif %}
+{% endif %}
+<br>
 </body>
 </html>
