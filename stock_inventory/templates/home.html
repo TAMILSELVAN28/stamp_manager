@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -31,8 +32,7 @@
 </form>
 
 
-{% load static %}
-<link rel='stylesheet' href="{% static 'style.css' %}">
+<link rel='stylesheet' type="text/css" href="{% static 'stamp/style.css' %}">
 {% if form_invalid %}
 <h3>Please Select the stamp paper category and click sale or stock</h3>
 {% else %}
