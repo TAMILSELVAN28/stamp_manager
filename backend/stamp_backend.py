@@ -19,9 +19,10 @@ def process_purchases(filename, stamp):
     return stamp_df
 
 def process_sales(filename, stamp):
-    ignore_list = ['SRO', 'To', 'Total Amount', 'Buyer Name']
-    sale_df = pd.read_excel(filename, names=['name', "sold_date", "stamp_type", "denomination", "amount", "stamp_id"])
-    sale_df = sale_df.loc[~sale_df['name'].isin(ignore_list)]
+    if "csv" in filename:
+        sale_df = pd.read_csv(filename)
+    else:
+        sale_df = pd.read_excel(filename)
     stamp_df = sale_df.loc[sale_df['denomination'] == stamp].copy()
     stamp_df = stamp_df.dropna(subset=['stamp_id'])
     return stamp_df
